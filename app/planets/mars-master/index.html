@@ -1,0 +1,999 @@
+<!DOCTYPE HTML>
+<!--/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --allow-file-access-from-files
+-->
+<html>
+<head>
+	<title>WebGL Mars</title>
+	<style>
+		body {		
+			background-color: #000000;
+			margin: 0px;
+			overflow : hidden;
+		}
+
+		#istructions {
+			z-index: 102;
+ 			position: fixed;
+ 			top: 0px;
+ 			left: 10px;
+ 			width: 305px;
+ 			height: 262px;
+ 			overflow: hidden;
+			}
+			
+		#List_panel {
+			z-index: 101;
+			position: fixed;
+			left: 10px;
+			top: 0px;
+			height: 3em;
+			width:400px;
+			vertical-align: top;
+			color : #0099FF;
+			cursor: pointer;
+			cursor: hand;
+			
+			overflow: hidden;
+			}
+		#List_panel:hover{
+			height: 100%;
+		}
+		#List_panel ol li {
+			padding: 5px;
+			list-style: none;
+			margin: 8px;
+			background: #fff;
+			color: #555;
+			font-family: ariel;
+			font-size: .8em;
+
+
+		}
+		#List_panel ol li:hover {
+			color: #fff;
+			background: #09f;
+			box-shadow: 1px 1px 3px #555;
+			
+		}
+		#List_panel ol li.active {
+			color: rgb(255, 5, 215);
+			
+		}
+		#List_panel ol li.active:hover {
+			color: #fff;
+			background:rgb(255, 5, 215);
+		}
+		#Info_panel {
+			z-index: 104;
+			position: fixed;
+			padding: 0.5em;
+			right: 10px;
+			top: 300px;
+			height: 30px;
+			width:450px;
+			vertical-align: top;
+			color : #0099FF;
+			cursor: pointer;
+			cursor: hand;
+			border:0;
+			background:transparent;
+			}	
+
+		#Gmap_panel {
+ 			z-index: 102;
+ 			position: fixed;
+ 			top: 0px;
+ 			right: 10px;
+ 			width: 305px;
+ 			height: 262px;
+ 			overflow: hidden;
+		}	
+		#gmap {
+			height: 300px;
+			width: 300px;
+		}
+		
+		#Stat_panel {
+			z-index: 103;
+			position: fixed;
+			padding: 0.5em;
+			left: 10px;
+			bottom: 35px;
+			height: 40px;
+			width:300px;
+			vertical-align: top;
+			color : #0099FF;
+			}	
+		#options{
+			position: fixed;
+			z-index: 200;
+			bottom: 0;
+			left: 0;
+			background: #555;
+			padding: 0;
+			margin: 0;
+			width: 21em;
+			opacity: 0.3;
+			}
+		#options:hover{
+			opacity: 1;
+		}	
+		#options > li > h3 {
+			cursor: pointer;
+			padding-left: .2em;
+			padding-right: .2em;
+		}
+		#options > li {
+			padding: 1px;
+			list-style: none;
+			margin: 3px;
+			background: #fff;
+			color: #555;
+			font-family: ariel;
+			font-size: 1em;
+		}
+		#options > li > .contents{
+			display: none;
+			background: #fff;
+		
+		}
+		#options > li > .contents.active{
+			display: block;	
+		}
+		#options .date .amount{
+			width: 90%;
+			text-align: center;
+			margin-bottom: 10px;
+			border:none;
+		} 
+	</style>
+
+
+	<!--link rel="stylesheet" href="jquery-ui.css" /-->
+	<script src="three.js"></script>
+
+	<script src="THREEx.KeyboardState.js"></script>
+	<!--script src="TrackballControls.js"></script-->
+	<script src="jquery-1.9.1.js"></script>
+	<script src="jquery-ui-1.10.2.custom.js"></script>
+	<script src="ExternalDATA.js"></script>
+	<script src="underscore-min.js"></script>
+
+
+	<!-- set the info panel to be draggable-->
+	<script>
+		$(function() {
+			$( "#Info_panel" ).draggable();
+		});
+	</script>
+
+	<script>
+	  	$(function() {
+	    
+	  });
+  </script>
+
+</head>
+
+<body>
+
+	<div id="earthDiv" style="z-index:100;">
+	</div>
+	
+	<div id="Info_panel" class="ui-widget-content ui-corner-all">
+			<ul class='display'></ul>
+	</div>
+ 	
+ 	<div id="Stat_panel">
+ 		<ul class='stat'>Rotate mars with W,A,S,D,Q,E. <br> Zoom with K,L.</ul>
+ 	</div>
+
+ 	<div id="Gmap_panel">
+ 		
+ 	</div>
+
+ 	
+
+ 
+
+<script>
+
+/*
+	Author: Asher Krim
+	Hacked together on December 30th 2013
+*/ 
+(function  () {
+
+var stats, container;
+var camera, scene, renderer, earthGeometry, earthMaterial, earthMesh;
+var mouseGeometry, mouseMaterial, mouseMesh;
+var text3d ;
+var radius = 50;
+var start = 0;
+var first = true;
+var initial_move = true;
+var init_x = 0.003;
+var init_y = 0.01;
+var init_zoom = 0.8;
+var keyboard = new THREEx.KeyboardState(); 
+
+var canvas1 = document.getElementById('canvas1') ;
+ 
+var data = getRemoteData(); //read JSON data
+//console.log(data);
+
+var mouse = {x: 0, y: 0},
+	INTERSECTED, SELECTED, SELECTEDLIST = [];
+
+var runEff = true;
+init();
+animate();
+ 
+		// run the currently selected effect
+	    function runEffect() {
+
+	    	callback();
+	      // get effect type from
+	      var selectedEffect = "blind";
+	 
+	      // most effect types need no options passed by default
+	      var options = {};
+	      // some effects have required parameters
+	      if ( selectedEffect === "blind" ) {
+	        options = { percent: 100 };
+	      } else if ( selectedEffect === "size" ) {
+	        options = { to: { width: 280, height: 185 } };
+	      }
+	 
+	      // run the effect
+	      $( "#Info_panel .display" ).show( "blind", 2000);
+	    };
+	 
+	    //callback function to bring a hidden box back
+	    function callback() {
+	     
+	       $( "#Info_panel .display:visible" ).removeAttr( "style" ).fadeOut(1);
+	      
+	    };
+	 
+	
+
+function formatDate(d) {
+
+	return ((d.getMonth()+1) + "/" + d.getDate() + "/" + d.getFullYear());
+}
+
+function init()
+{
+//$('#earthDiv').append("<div style='overflow:hidden'> </div>")
+	
+	console.log("Mars locations in WebGL, by Asher Krim, 2013");
+	//display start text
+	displayINITInfo();
+
+	
+    
+ 
+	// function for creation of cylinder from center of earth to given vector3
+	var cylinderMesh = function( pointX, pointY, w, h, clr) {
+    	// edge from X to Y
+	    var direction = new THREE.Vector3().subVectors( pointY, pointX );
+	    var arrow = new THREE.ArrowHelper( direction, pointX );
+
+	    // cylinder: radiusAtTop, radiusAtBottom, 
+	    //     height, radiusSegments, heightSegments
+	    var edgeGeometry = new THREE.CylinderGeometry( w, w, h, 20, 5, false );
+
+	
+	    var edge = new THREE.Mesh( edgeGeometry, 
+	    	  new THREE.MeshLambertMaterial( { color:new THREE.Color().setHex(clr), wireframe: false } ) );
+
+	    
+
+	    edge.rotation = arrow.rotation.clone();
+	    edge.position = new THREE.Vector3().addVectors( pointX, direction.multiplyScalar(0.5) );
+
+	    return edge;
+
+	}
+
+	// Step 1 : Add Scene
+	scene = new THREE.Scene();
+ 
+	// Step 2 : Add Camera
+	camera = new THREE.PerspectiveCamera(25, window.innerWidth / window.innerHeight, 1, 10000 );
+	//camera.position.z = 250;
+	camera.position.z = 400;
+	scene.add( camera );
+ 
+
+	// Step 3 : Add Objects
+
+	//Adding The Earth
+	// Parameter 1 : radius
+	// Parameter 2 : segmentsWidth
+	// Parameter 3 : segmentsHeight
+	
+	
+
+	
+	//Add cool earth textures
+	var normalMap   = THREE.ImageUtils.loadTexture( 'textures/mars_normal1.png' );
+   	var specularMap = THREE.ImageUtils.loadTexture( 'textures/mars_spec1.png' );
+   	var surfaceMap = THREE.ImageUtils.loadTexture( 'textures/mars.jpg' );
+
+   	var shader = THREE.ShaderLib[ "normalmap" ];
+	var uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+
+	uniforms[ "tNormal" ].value = normalMap;
+	uniforms[ "tDiffuse" ].value = surfaceMap;
+	uniforms[ "tSpecular" ].value = specularMap;
+
+	uniforms[ "enableDiffuse" ].value = true;
+	uniforms[ "enableSpecular" ].value = true;
+
+	var shaderMaterial = new THREE.ShaderMaterial({ fragmentShader: shader.fragmentShader,
+											vertexShader: shader.vertexShader,
+											uniforms: uniforms,
+											lights: true
+											});
+
+
+	earthGeometry = new THREE.SphereGeometry( radius, 60, 24 ) ;
+	earthGeometry.computeTangents();
+
+	earthMesh = new THREE.Mesh( earthGeometry, shaderMaterial ) ;
+
+	scene.add(earthMesh);
+
+
+
+
+
+///////////////
+	var circleCreate = function( pointX, pointY, w, h, clr) {
+    	// edge from X to Y
+	    var direction = new THREE.Vector3().subVectors( pointY, pointX );
+	    var arrow = new THREE.ArrowHelper( direction, pointX );
+
+	    // cylinder: radiusAtTop, radiusAtBottom, 
+	    //     height, radiusSegments, heightSegments
+	    var edgeGeometry = new THREE.CylinderGeometry( w, w, h, 20, 5, false );
+		edgeGeometry.applyMatrix( new THREE.Matrix4().makeTranslation( 0, -(h/2), 0 ) );
+	   // var edge = new THREE.Mesh( edgeGeometry, 
+	     //   new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } ) );
+
+	    var edge = new THREE.Mesh( edgeGeometry, 
+	        new THREE.MeshPhongMaterial( { color:new THREE.Color().setRGB(clr[0],clr[1],clr[2]), wireframe: false } ) );
+	    
+
+	    edge.rotation = arrow.rotation.clone();
+	    edge.position = new THREE.Vector3().addVectors( pointX, direction.multiplyScalar(0.5) );
+	    return edge;
+	}
+
+/*
+/////////////
+
+	var thinkX = 60, 
+		thinkY = 60, 
+		thinkZ = 60;
+
+	//mouseMesh = circleCreate(new THREE.Vector3(thinkX, thinkY, thinkZ), new THREE.Vector3(thinkX*1.01, thinkY*1.01, thinkZ*1.01),5,0.5,[255,255,255]);
+
+	mouseMesh = circleCreate(new THREE.Vector3(thinkX, thinkY, thinkZ), new THREE.Vector3(thinkX*1.01, thinkY*1.01, thinkZ*1.01),0.5,3,[255,255,255]);
+	//mouseMesh.rotation.x = 0;
+	//mouseMesh.rotation.y = 20;
+	scene.add(mouseMesh);
+/////////////
+*/
+	//CYLINDER
+
+	var w = radius*0.01;
+	var h = radius*1.0005;
+ 
+ 	
+
+	//getting info from data file
+	
+	var points = [];
+	var mag = [];
+	var color = [Math.random(),Math.random(),Math.random()];
+	var infoArray =[];
+	for (var i=0; i < data.length; i++) {
+		var coords = { 	
+			"LongLetter":data[i].LatLetter, 
+			"Long":data[i].Lat, 
+			"LatLetter":data[i].LongLetter, 
+			"Lat":data[i].Long,
+			"Nationality":data[i].Nationality
+		};
+
+		//add these to infoobj
+		var la = data[i]["Lat"];
+ 		if (data[i]["LatLetter"] == "S") {
+ 			la *= -1;
+ 		}
+ 		var lo = data[i]["Long"];
+ 		if (data[i]["LongLetter"] == "W") {
+ 			lo *= -1;
+ 		}
+ 		data[i].coordinates = {}
+ 		data[i].coordinates.Lat = la;
+ 		data[i].coordinates.Lon = lo;
+
+ 						
+		points.push(coords);
+		infoArray.push(data[i]);
+
+	}
+
+ 	var longDeg, latDeg, wantedX, wantedY, wantedZ, cylinder;
+ 	for (var i = 0; i < data.length; i++) {
+ 		
+ 		w = 0.7;//radius*0.01;
+		h = 35;//radius*1.0005;
+ 		var c = 0x00FF00;
+ 		if (points[i]["Nationality"] === "USA") {
+ 			c = 0x0000FF;
+ 		} else {
+ 			c = 0xFF0000;
+ 		}
+		var c = 0x0000FF;
+ 		latDeg = points[i]["Lat"];
+ 		if (points[i]["LatLetter"] == "S") {
+ 			latDeg *= -1;
+ 		}
+ 		longDeg = points[i]["Long"];
+ 		if (points[i]["LongLetter"] == "W") {
+ 			longDeg *= -1;
+ 		}
+
+ 		longitude = Math.PI/180*(0-longDeg);
+    	latitude = Math.PI/180*(90-latDeg);
+
+    	wantedX = h * Math.sin(latitude) * Math.cos(longitude);
+    	wantedY = h * Math.cos(latitude);
+    	wantedZ = h * Math.sin(latitude) * Math.sin(longitude);
+		
+		cylinder = cylinderMesh(new THREE.Vector3(wantedX, wantedY, wantedZ), new THREE.Vector3(wantedX*1.01, wantedY*1.01, wantedZ*1.01),w,h,c);
+		cylinder.infoObject = infoArray[i];
+		cylinder.flags = {sel: false, spsel: false, hover: false};
+		
+
+	
+
+		cylinder.origHex = cylinder.material.color.getHex();
+		
+		earthMesh.add(cylinder);
+
+ 	}
+
+				//
+				var sun_x = 40;
+				var sun_y = 20;
+				var sun_z = 80;
+
+				var pointLight = new THREE.PointLight( 0xfff5f2, 0.8, 800 );
+				pointLight.position.set(sun_x,sun_y,sun_z);
+				scene.add( pointLight );
+
+
+
+				var dirLight = new THREE.DirectionalLight( 0xffff00, 1 );
+				dirLight.color.setHSL( 0.1, 1, 0.95 );
+				//dirLight.position.set( -1, 1.75, 1 );
+				dirLight.position.set(sun_x,sun_y,sun_z);
+				dirLight.position.multiplyScalar( 60 );
+				scene.add( dirLight );
+
+				dirLight.castShadow = true;
+
+				dirLight.shadowMapWidth = 2048;
+				dirLight.shadowMapHeight = 2048;
+
+				var d = 50;
+
+				dirLight.shadowCameraLeft = -d;
+				dirLight.shadowCameraRight = d;
+				dirLight.shadowCameraTop = d;
+				dirLight.shadowCameraBottom = -d;
+
+				dirLight.shadowCameraFar = 3500;
+				dirLight.shadowBias = -0.0001;
+				dirLight.shadowDarkness = 0.35;
+				dirLight.shadowCameraVisible = true;
+
+
+
+	// Step 4 : Add Renderer
+	//renderer = new THREE.CanvasRenderer();
+	renderer = new THREE.WebGLRenderer(canvas1);
+	renderer.sortObjects = false;
+	renderer.setSize( window.innerWidth, window.innerHeight );
+ 
+ 	//controls = new THREE.TrackballControls( camera );
+ 	projector = new THREE.Projector();
+	
+
+	$('#earthDiv').append(renderer.domElement);
+
+	
+
+	renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
+	renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
+	window.addEventListener( 'resize', onWindowResize, false );
+}
+ 
+function onWindowResize( event ) {
+
+   	renderer.setSize( window.innerWidth, window.innerHeight );
+
+   	camera.aspect = window.innerWidth / window.innerHeight;
+   	camera.updateProjectionMatrix();
+
+}; 
+
+function animate()
+{
+	// note: three.js includes requestAnimationFrame shim
+	requestAnimationFrame( animate );
+	render();
+	update();
+	//stats.update();
+}
+ 
+function render() {
+
+	var xMove = 0;
+	var yMove = 0;//-0.0001;
+	var zMove = 0;
+	var zoom = 0;
+
+	if(initial_move) {
+		initial_rotation();
+	}
+
+	if( keyboard.pressed("c"))
+		start_fresh();
+
+	else {
+		if( keyboard.pressed("d") || keyboard.pressed("right"))
+			yMove = leftArrowPressed();
+
+		if( keyboard.pressed("a") || keyboard.pressed("left"))
+			yMove = rightArrowPressed();
+
+		if( keyboard.pressed("w") || keyboard.pressed("up"))
+			xMove = upArrowPressed();
+
+		if( keyboard.pressed("s") || keyboard.pressed("down"))
+			xMove = downArrowPressed();
+
+		if( keyboard.pressed("e"))
+			zMove = -0.05;
+
+		if( keyboard.pressed("q"))
+			zMove = 0.05;
+
+		if( keyboard.pressed("l"))
+			zoom = 5;
+
+		if( keyboard.pressed("k"))
+			zoom = -5;
+
+		//var vec = new THREE.Vector3(mouse.x,mouse.y,1)
+		//mouseMesh.rotation = vec.sub(camera.position);
+		 
+		earthMesh.rotation.x += xMove;
+		earthMesh.rotation.y += yMove;
+		earthMesh.rotation.z += zMove;
+
+		if ((camera.position.z) > 55 || zoom > 0) {
+			camera.position.z += zoom;	
+		}
+
+	}
+
+	if (!(xMove == 0 && yMove == 0 && zMove == 0 && zoom == 0) || start < 20) {
+		renderer.render( scene, camera );
+		if (start < 20)
+			start++;
+		}
+
+}
+ 
+ function leftArrowPressed() {
+   return 0.02;
+}
+
+function rightArrowPressed() {
+   return -0.02;
+}
+
+function upArrowPressed() {
+   return -0.02;
+}
+
+function downArrowPressed() {
+   return 0.02;
+}
+
+
+function update() {
+
+	// find intersections
+
+	// create a Ray with origin at the mouse position
+	//   and direction into the scene (camera direction)
+	var vector = new THREE.Vector3( mouse.x, mouse.y, 1 );
+	projector.unprojectVector( vector, camera );
+	earthMesh.add(vector);
+	var ray = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+
+	// create an array containing all objects in the scene with which the ray intersects
+	var intersects = ray.intersectObjects( scene.children[1].children);
+
+	
+	
+	// if there is one (or more) intersections
+	if ( intersects.length > 0 )
+	{	
+
+		
+		// if the closest object intersected is not the currently stored intersection object
+		if ( INTERSECTED != intersects[ 0 ].object ) 
+		{	
+			//check if nearest object is selected or not
+			var selected = CheckIfSelected( INTERSECTED );
+		  	  // restore previous intersection object (if it exists) to its original color
+			if ( INTERSECTED && !selected) {
+				INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
+			}
+			else if ( INTERSECTED && selected) {
+				//console.log("INTERSECTED && select, reverting to", INTERSECTED.selectHex);
+
+				INTERSECTED.material.color.setHex( INTERSECTED.selectHex );
+
+
+			}
+			// store reference to closest object as current intersection object
+			INTERSECTED = intersects[ 0 ].object;
+
+			//display minimal info for mouse hover
+			displayMinimalInfo(INTERSECTED);
+			//check if intersected object is selected or not
+			selected = CheckIfSelected( INTERSECTED );
+			//console.log(INTERSECTED);
+			if (!selected) {
+				// store color of closest object (for later restoration)
+				INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
+				// set a new color for closest object
+				INTERSECTED.material.color.setHex( 0xffff00 );
+
+				start = 0;
+				render();
+			}
+			else if (selected) { //selected, still want to show mouseover
+				INTERSECTED.selectHex = INTERSECTED.material.color.getHex();
+				INTERSECTED.material.color.setHex( 0xffffff );
+				start = 0;
+				render();
+
+			}
+		}
+	} 
+	else // there are no intersections
+	{
+		start = 0;
+		// restore previous intersection object (if it exists) to its original color
+		if ( INTERSECTED ) {
+				revert=null;
+				revert=_.find(earthMesh.children, function(item){return (INTERSECTED.id == item.id);});//this intersected is selected
+				
+			
+			if (!revert.flags.sel) {
+				INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
+			}
+			else if (revert.flags.sel) { //this object is in selected list
+				INTERSECTED.material.color.setHex( INTERSECTED.selectHex );
+			}
+
+		}
+
+			runEff = true;
+
+
+
+
+		render();
+		// remove previous intersection object reference
+		//     by setting current intersection object to "nothing"
+		INTERSECTED = null;
+	}
+	
+	
+	//earthMesh.remove(vector);
+	//controls.update();
+	//stats.update();
+	
+
+
+}
+
+function CheckIfSelected( ITEM ) {
+
+	if (ITEM)
+		return ITEM.flags.sel;
+	else 
+		return false;
+
+}
+
+function GetIndex( LIST ) {
+
+	for(var i = 0; i < LIST.length; i++) {
+		if (INTERSECTED != null && INTERSECTED.id == SELECTEDLIST[i].id) { //this intersected is selected
+			return i;
+		}
+	}
+	return -1;	
+}
+
+function cursorPositionInCanvas(canvas, event) {
+    var x, y;
+
+    canoffset = $(canvas).offset();
+    x = event.clientX + document.body.scrollLeft + document.documentElement.scrollLeft - Math.floor(canoffset.left);
+    y = event.clientY + document.body.scrollTop + document.documentElement.scrollTop - Math.floor(canoffset.top) + 1;
+
+    return [x,y];
+}
+
+	function onDocumentMouseMove( event ) {
+		mouse.x = ( (event.clientX) / window.innerWidth ) * 2 - 1;
+		mouse.y = - ( (event.clientY) / (window.innerHeight) ) * 2 + 1;
+	}
+
+	function onDocumentMouseDown( event ) {
+
+		var str ="";
+		var altOption=false;
+		var zOption=false;
+		//event.preventDefault();
+
+				//console.log("runningh 1");
+		//if clicked while holding down alt		
+		if (keyboard.pressed("alt")) {
+			//special select
+			console.log("alt key pressed");
+			altOption=true;
+		}
+		if (keyboard.pressed("z")) {
+			//special select
+			console.log("z key pressed");
+			zOption=true;
+		}
+
+		if ( INTERSECTED) {
+
+
+			SELECTED = INTERSECTED;
+
+			//check if clicked object is already selected
+			var selected = CheckIfSelected(SELECTED);
+
+
+			if (!selected && SELECTED != null) {
+				// store color of closest object (for later restoration)
+			
+				// set a new color for closest object
+				SELECTED.material.color.setHex( 0xff00ff );
+				SELECTED.selectHex = SELECTED.material.color.getHex();
+				//turn off wireframe
+				SELECTED.material.wireframe = !SELECTED.material.wireframe ;
+				SELECTED.material.needsUpdate = true;
+			
+				
+				//set selected flag
+				SELECTED.flags.sel = true;
+
+				runEff = true;
+				console.log(SELECTED);
+			//	use this to show googleMaps
+			//	displayMaximalInfo( SELECTED );
+				
+			}
+			//this object is not selected
+			else if (SELECTED != null)  { //need to remove it from list
+				
+				if (SELECTED.flags.spsel) //go back to special color
+					SELECTED.material.color.setHex( SELECTED.currentHex);
+				else //go back to original color
+					SELECTED.material.color.setHex( SELECTED.origHex);
+
+				//turn on wireframe
+				SELECTED.material.wireframe = !SELECTED.material.wireframe;
+				SELECTED.material.needsUpdate = true;
+
+
+				var index = GetIndex( SELECTEDLIST );
+			//	$('#List_panel #dot_'+SELECTED.id).remove();
+			//	SELECTEDLIST.splice(index,1);
+				
+				//set removed flag
+				SELECTED.flags.sel = false;
+
+
+			}
+			start = 0;
+			if(altOption) {
+				altClick(SELECTED);
+			}
+			if(zOption) { 
+				zClick(SELECTED);
+			}
+		//	if(!altOption && !zOption)
+			//	displayStats();
+			render();
+
+		
+		}
+	}
+
+	function color_select_set( DOT, colr ) {
+		DOT.prevHex = DOT.material.color.getHex();
+		DOT.material.color.setHex( colr );
+		//DOT.selectHex = DOT.material.color.getHex();
+	}
+
+	function color_select_revert( DOT ) {
+		if (!DOT.flags.sel)
+			DOT.material.color.setHex( DOT.prevHex);
+
+	//	console.log(DOT.currentHex);
+	//	console.log(DOT.getHex);
+	//	console.log(DOT.selectHex);
+	}
+
+	/*
+	//if changing color of spsel items, zero them before a new selection
+	function zero_prev_color() {
+		//start by zeroing previous selections
+		_.chain(earthMesh.children)
+		.filter(function(item){ 
+			return (item.flags.spsel);
+		})
+		.each(function(item) {
+			item.flags.spsel = false; 
+			color_select_revert(item);
+		})
+		;
+	}
+	*/
+
+	function altClick( SEL ) {
+
+		console.log("IN ALT CLICK")
+		variation = 0.2;
+		
+		$( ".slider-range" ).slider( "option", "values", [ SEL.infoObject.properties.mag-0.2, SEL.infoObject.properties.mag+0.2 ] );
+
+		magSlideChange([ SEL.infoObject.properties.mag-0.2, SEL.infoObject.properties.mag+0.2 ]);
+
+     
+	}
+
+//similar to mag but for radius
+function zClick( SEL ) {
+
+		console.log("IN Z CLICK")
+		var wantedArea = 30;
+		var n1 = SEL.infoObject.geometry.coordinates[0] * Math.PI/180;
+		var t1 = SEL.infoObject.geometry.coordinates[0]* Math.PI/180;
+		var r = radius;
+    
+		_.chain(earthMesh.children)
+		.filter(function(item){ 
+				var n2 = item.infoObject.geometry.coordinates[0]*Math.PI/180;
+				var t2 = item.infoObject.geometry.coordinates[1]*Math.PI/180;
+				
+				return (Math.acos(Math.sin(t1) * Math.sin(t2 + Math.cos(t1) * Math.cos(t2) * Math.cos(n1 - n2)))*r < wantedArea);
+		})
+		.each(function(item){ 
+			
+			item.flags.spsel = true; //mark this guy
+			
+		})
+
+		//hide nonwanted points	
+		_.chain(earthMesh.children)
+		.filter(function(item){
+			return(!item.flags.sel && !item.flags.spsel);
+		})
+		.each(function(item){
+				item.visible = false;
+		})	
+	}
+
+
+	function displayMinimalInfo(WANTED) {
+
+		
+		if(WANTED.visible) {
+			$('#Info_panel .display').html("")
+
+			$('#Info_panel .display').append("<li class=display'>"+"name: "+WANTED.infoObject.Name+"</li>")
+			$('#Info_panel .display').append("<li class=display'>"+"location: "+WANTED.infoObject.Location+"</li>")
+			$('#Info_panel .display').append("<li class=display'>"+"latitude: "+WANTED.infoObject.Lat+WANTED.infoObject.LatLetter+ " longitude: "+WANTED.infoObject.Long+WANTED.infoObject.LongLetter+"</li>")
+			$('#Info_panel .display').append("<li class=display'>"+"status: "+WANTED.infoObject.Status+"</li>")
+			$('#Info_panel .display').append("<li class=display'>"+"year landed: "+WANTED.infoObject.Landed+"</li>")
+		}
+
+		
+	}
+
+	function displayMaximalInfo(WANTED) {
+
+		var date;
+
+		console.log(WANTED);
+	
+		if($('#Gmap_panel #gmap').length == 0)
+			$('#Gmap_panel ').append('<iframe id="gmap" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="http://maps.google.com/?ie=UTF8&ll='+WANTED.infoObject.coordinates.Lat+','+WANTED.infoObject.coordinates.Lon+'&spn=0.660108,1.264801&t=h&z=8&output=embed"></iframe>')
+		else
+			$('#Gmap_panel #gmap').prop("src",'http://maps.google.com/?ie=UTF8&ll='+WANTED.infoObject.coordinates.Lat+','+WANTED.infoObject.coordinates.Lon+'&spn=0.660108,1.264801&t=h&z=8&output=embed')
+
+		if (runEff) {
+			//runEffect();
+			runEff = false;
+		}
+		
+		return false;
+	}
+
+
+	function displayINITInfo() {
+
+		
+
+		$('#Info_panel .display').html("")
+
+		
+		$('#Info_panel .display').append("<li class=display'>"+"Hello and welcome! This application displays mars for your viewing pleasure. "+"</li>")
+		$('#Info_panel .display').append("<li class=display'>"+"Rotate mars with W,A,S,D. Zoom with K,L. "+"</li>")
+		
+		$('#Info_panel .display').append("<li class=display'>"+"Information panel can be dragged around."+"</li>")
+	}
+function initial_rotation() {
+
+	if ((-1*earthMesh.rotation.y) > 2) {
+		if (init_zoom < 0.0001) {
+			initial_move = false;
+			return;
+		}
+		else {
+			init_x *= (init_x-0.0001);
+			init_y *= (init_y-0.0001);
+			init_zoom *= (init_zoom-0.001);
+		}
+	}
+
+	else {
+		earthMesh.rotation.y -= init_y;
+		earthMesh.rotation.x += init_x;
+		//if (camera.position.z > 250)
+			camera.position.z -= init_zoom;
+
+	}
+
+}
+
+
+})();
+ 
+
+
+</script>
+</body>
+</html>
