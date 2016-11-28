@@ -11,10 +11,16 @@
 	var width  = window.innerWidth,
 		height = window.innerHeight;
 
-	// Earth params
 	var radius   = 0.5,
 		segments = 32,
-		rotation = 6;  
+		rotation = 6;
+		
+	//var config = {
+	//	totalSpeed: 0	
+	//};
+	
+//	var gui = new dat.GUI();
+//    gui.add(config, 'totalSpeed').min(-0.1).max(0.1).step(0.00001);
 
 	var scene = new THREE.Scene();
 
@@ -30,20 +36,51 @@
 	renderer.setSize(width, height);
 
 	//LIGHT
-	scene.add(new THREE.AmbientLight(0x333333));
-
+	//scene.add(new THREE.AmbientLight(0x222222));
+	//
 	var light = new THREE.DirectionalLight(0xffffff, 1);
-	light.position.set(5,3,5);
-	scene.add(light);
+	light.position.set(51,0,0);
+	light.target.position.set( 0,0,0 );
+	//scene.add(light);
 	
-	var pointLight = new THREE.PointLight(16777215, 1);
+	var pointLight = new THREE.PointLight(0xffffff, 1, 10000); // color, intensity, distance, decay
 	pointLight.position.x = 0;
 	pointLight.position.y = 0;
 	pointLight.position.z = 0;
-	scene.add(pointLight);
-	var camLight = new THREE.PointLight(16777215, 0.3);
+	//scene.add(pointLight);
+	
+	var camLight = new THREE.PointLight(0xffffff, 0.2);
 	camLight.position = camera.position;
 	scene.add(camLight);
+	
+	//controls
+	//var controls = new THREE.TrackballControls(camera);
+	var controls = new THREE.OrbitControls( camera, renderer.domElement );
+    controls.minDistance = 1;
+    controls.maxDistance = 2000;
+    controls.target = new THREE.Vector3(0,0,0);
+	
+	
+	//MOUSE CLICK - INTERSECTIONS
+	var raycaster = new THREE.Raycaster();
+
+	var clickInfo = {
+	  mouseVec2: new THREE.Vector2(),
+	  userHasClicked: false
+	};
+		
+	window.addEventListener( 'click', onMouseClick, false );
+	function onMouseClick( event ) {
+
+		// calculate mouse position in normalized device coordinates
+		// (-1 to +1) for both components
+		
+		clickInfo.userHasClicked = true;
+		clickInfo.mouseVec2.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+		clickInfo.mouseVec2.y = - ( event.clientY / window.innerHeight ) * 2 + 1;		
+	
+	}
+	/////////
 	
 	var objectsInfo = {
 		sun: {
@@ -52,7 +89,7 @@
 			y: 0,
 			z: 0,
 			radius: 0,
-			speed: 0.01,
+			speed: 0.001,
 			degree: Math.PI / 2,
 			radian: 0,
 			planetSize: 50,
@@ -64,7 +101,7 @@
 			y: 0,
 			z: 0,
 			radius: 57,
-			speed: 0.8,
+			speed: 0.08,
 			degree: Math.random() * 1000,
 			radian: 0,
 			planetSize: 4,
@@ -76,7 +113,7 @@
 			y: 0,
 			z: 0,
 			radius: 100,
-			speed: 0.3,
+			speed: 0.03,
 			degree: Math.random() * 1000,
 			radian: 0,
 			planetSize: 8,
@@ -88,12 +125,28 @@
 			y: 0,
 			z: 0,
 			radius: 130,
-			speed: 0.2,
+			speed: 0.02,
 			degree: Math.random() * 1000,
 			radian: 0,
 			planetSize: 8,
 			mesh: null,
-			cloudsMesh: null
+			cloudsMesh: null,
+			
+			satellites: [
+				{
+					name: "Moon",
+					x: 0,
+					y: 0,
+					z: 0,
+					radius: 12,
+					speed: 0.02,
+					degree: Math.random() * 1000,
+					radian: 0,
+					planetSize: 2.18,
+					mesh: null,
+					cloudsMesh: null
+				}
+			]
 		},
 		mars: {
 			 name: "Mars",
@@ -101,7 +154,7 @@
 			y: 0,
 			z: 0,
 			radius: 180,
-			speed: 0.1,
+			speed: 0.01,
 			degree: Math.random() * 1000,
 			radian: 0,
 			planetSize: 6,
@@ -113,7 +166,7 @@
 			y: 0,
 			z: 0,
 			radius: 300,
-			speed: 0.06,
+			speed: 0.006,
 			degree: Math.random() * 1000,
 			radian: 0,
 			planetSize: 20,
@@ -125,7 +178,7 @@
 			y: 0,
 			z: 0,
 			radius: 400,
-			speed: 0.03,
+			speed: 0.003,
 			degree: Math.random() * 1000,
 			radian: 0,
 			planetSize: 17,
@@ -138,7 +191,7 @@
 			y: 0,
 			z: 0,
 			radius: 450,
-			speed: 0.05,
+			speed: 0.005,
 			degree: Math.random() * 1000,
 			radian: 0,
 			planetSize: 10,
@@ -151,7 +204,7 @@
 			y: 0,
 			z: 0,
 			radius: 500,
-			speed: 0.03,
+			speed: 0.003,
 			degree: Math.random() * 1000,
 			radian: 0,
 			planetSize: 10,
@@ -163,21 +216,27 @@
 			y: 0,
 			z: 0,
 			radius: 550,
-			speed: 0.03, //?
+			speed: 0.003, //?
 			degree: Math.random() * 1000,
 			radian: 0,
 			planetSize: 5, //0.42
 			mesh: null
 		},
 	};
-
+	
+	
 	//SUN
 	var sun = createSun(objectsInfo.sun.planetSize, segments);
 	sun.position.x = 0;
 	sun.position.y = 0;
 	sun.position.z = 0;
 	objectsInfo.sun.mesh = sun;
-	scene.add(sun);
+	//scene.add(sun);
+	
+	//SUNLIGHT
+	pointLight.add(sun);
+	scene.add( pointLight );
+
 	
 	//MERCURY
 	var mercury  = createMercury(objectsInfo.mercury.planetSize, segments);
@@ -202,6 +261,14 @@
 	objectsInfo.earth.cloudsMesh = earthClouds;
 	scene.add(earthClouds);
 	
+	var moonInfo  = objectsInfo.earth.satellites.find(function(el){ return el.name.toLowerCase() == 'moon'});
+	var moon = createMoon(moonInfo.planetSize, segments);
+	moon.rotation.y = Math.PI / 2; 
+	//objectsInfo.moon.mesh = moon;
+	moonInfo.mesh = moon;
+	//scene.add(moon);
+	earth.add(moon);
+	
 	//MARS
 	var mars = createMars(objectsInfo.mars.planetSize, segments);
 	mars.rotation.y = Math.PI / 2;
@@ -219,14 +286,18 @@
 	saturn.rotation.y = Math.PI / 2;
 	objectsInfo.saturn.mesh = saturn;
 	objectsInfo.saturn.ringsMesh = createSaturnRings();
+	objectsInfo.saturn.ringsMesh.rotation.x = Math.PI / 2;
 	scene.add(saturn);
+	scene.add(objectsInfo.saturn.ringsMesh);
 	
 	//URAN
 	var uran = createUranus(objectsInfo.uran.planetSize, segments);
 	uran.rotation.y = Math.PI / 2;
 	objectsInfo.uran.mesh = uran;
 	objectsInfo.uran.ringsMesh = createUranusRings();
+	objectsInfo.uran.ringsMesh.rotation.x = Math.PI / 2;
 	scene.add(uran);
+	scene.add(objectsInfo.uran.ringsMesh);
 	
 	//NEPTUN
 	var neptun = createNeptune(objectsInfo.neptun.planetSize, segments);
@@ -244,7 +315,7 @@
 	var stars = createStars(1500, 64);
 	scene.add(stars);
 
-	var controls = new THREE.TrackballControls(camera);
+	
 
 	webglEl.appendChild(renderer.domElement);
 
@@ -257,6 +328,8 @@
 		for(var p in objectsInfo){
 			if(!objectsInfo.hasOwnProperty(p))
 				continue;
+			
+			//objectsInfo[p].speed = config.totalSpeed;
 			
 			objectsInfo[p].degree += objectsInfo[p].speed;
 			objectsInfo[p].radian = (objectsInfo[p].degree / 180) * Math.PI;
@@ -277,7 +350,55 @@
 				objectsInfo[p].ringsMesh.position.x = objectsInfo[p].x;
 				objectsInfo[p].ringsMesh.position.y = 0;
 				objectsInfo[p].ringsMesh.position.z = objectsInfo[p].z;
-				objectsInfo[p].ringsMesh.rotation.y += objectsInfo[p].speed;
+			}
+			if(objectsInfo[p].satellites && objectsInfo[p].satellites.length > 0){
+				objectsInfo[p].satellites.forEach(function(satellite, i ,arr){
+					var R = satellite.radius;
+					satellite.degree += satellite.speed;
+					satellite.radian = (satellite.degree / 180) * Math.PI;
+					satellite.x = R*Math.cos(satellite.radian);
+					satellite.z = R*Math.sin(satellite.radian);
+					satellite.mesh.position.x = satellite.x;
+					satellite.mesh.position.y = 0;
+					satellite.mesh.position.z = satellite.z;
+					//satellite.mesh.rotation.y += satellite.speed;
+				});
+			}
+		}
+		
+		//CLICK
+		if(clickInfo.userHasClicked){
+			clickInfo.userHasClicked = false;
+			
+			
+			
+			// update the picking ray with the camera and mouse position	
+			raycaster.setFromCamera( clickInfo.mouseVec2, camera );	
+		
+			// calculate objects intersecting the picking ray
+			var intersects = raycaster.intersectObjects( scene.children );
+			
+			//The intersection// object holds the intersection point, the face that's // been "hit" by the ray, and the object to which that // face belongs.
+			var first = intersects[0];
+			var targetObg = first.object;
+			console.log("click ray intersection ",first,targetObg.name, targetObg.id);
+
+			//check if planet
+			var found = false;
+			for(var p in objectsInfo){
+				if(!objectsInfo.hasOwnProperty(p))
+					continue;
+				found = found || (objectsInfo[p].mesh.id === targetObg.id);
+			}
+			if(found){
+				targetObg.material.color.set( 0xff0000 );
+				
+				controls.target = new THREE.Vector3(targetObg.position.x,targetObg.position.y,targetObg.position.z);
+		
+				//for ( var i = 0; i < intersects.length; i++ ) {
+				//	console.log("click ray intersection ",intersects[ i ].object.name,intersects[ i ].object.id);
+				//	intersects[ i ].object.material.color.set( 0xff0000 );
+				//}
 			}
 		}
 		
@@ -286,6 +407,7 @@
 		requestAnimationFrame(render);
 		renderer.render(scene, camera);
 	}
+	
 	
 	function IsNullOrEmpty(val){
 		if(val === null || val === undefined || val.length === 0)
@@ -322,7 +444,8 @@
 	function createSun(radius, segments) {
 		return new THREE.Mesh(
 			new THREE.SphereGeometry(radius, segments, segments),
-			new THREE.MeshPhongMaterial({
+			//new THREE.MeshPhongMaterial({
+			new THREE.MeshBasicMaterial({
 				//map:         THREE.ImageUtils.loadTexture('images/sun/sunmap.jpg'),
 				//map:         THREE.ImageUtils.loadTexture('images/sun/Surface of the sun.jpg'),
 				//map:         THREE.ImageUtils.loadTexture('images/sun/euvisdoCarringtonMap.jpg'),
@@ -387,6 +510,19 @@
 		);		
 	}
 	
+	function createMoon(radius, segments) {
+		return new THREE.Mesh(
+			new THREE.SphereGeometry(radius, segments, segments),
+			new THREE.MeshPhongMaterial({
+				map:         THREE.ImageUtils.loadTexture('images/earth/moonmap1k.jpg'),
+				bumpMap:     THREE.ImageUtils.loadTexture('images/earth/moonbump1k.jpg'),
+				bumpScale:   0.005,
+				//specularMap: THREE.ImageUtils.loadTexture('images/earth/specular.png'),
+				//specular:    new THREE.Color('grey')								
+			})
+		);
+	}
+	
 	function createMars(radius, segments) {
 		return new THREE.Mesh(
 			new THREE.SphereGeometry(radius, segments, segments),
@@ -437,7 +573,6 @@
 			new THREE.MeshPhongMaterial({
 				//map:         THREE.ImageUtils.loadTexture('images/saturn/ringmap.jpg'),
 				map:         THREE.ImageUtils.loadTexture('images/saturn/ringmap2.png'),
-				//map:         THREE.ImageUtils.loadTexture('images/saturn/map.jpg'),
 				transparent: true,
 				opacity: 0.6
 			})
