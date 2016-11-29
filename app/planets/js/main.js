@@ -311,6 +311,24 @@
 	objectsInfo.pluto.mesh = pluto;
 	scene.add(pluto);
 	
+	//ORBITS
+	var palnetOrbits = [];
+	for(var p in objectsInfo){
+		if(!objectsInfo.hasOwnProperty(p) || p == "sun")
+			continue;
+		
+		var planet = objectsInfo[p];
+			
+		var circleGeometry = new THREE.CircleGeometry( planet.radius, 32 );
+		var circleMaterial = new THREE.MeshBasicMaterial( { color: 0xC2C0C2 } );
+		//var circle = new THREE.Mesh( circleGeometry, circleMaterial );
+		circleGeometry.vertices.shift(); // Remove center vertex
+		var circle = new THREE.Line( circleGeometry, circleMaterial );
+		circle.position.set(0,0,0);
+		circle.rotation.x = Math.PI / 2;
+		scene.add( circle );
+	}
+	
 	//STARS
 	var stars = createStars(1500, 64);
 	scene.add(stars);
@@ -407,6 +425,40 @@
 		requestAnimationFrame(render);
 		renderer.render(scene, camera);
 	}
+	
+	//KEYBOARD CONTROLS
+	document.addEventListener('keydown', function(event){
+		switch ( event.keyCode ) {
+			
+			//HELP
+			case 27: //esc
+				
+				break;
+			case 27: //F1
+				
+				break;
+			
+			case 38: // up
+			case 87: // w
+				moveForward = true;
+				break;
+			case 37: // left
+			case 65: // a
+				moveLeft = true; break;
+			case 40: // down
+			case 83: // s
+				moveBackward = true;
+				break;
+			case 39: // right
+			case 68: // d
+				moveRight = true;
+				break;
+			case 32: // space
+				if ( canJump === true ) velocity.y += 350;
+				canJump = false;
+				break;
+		}
+	}, false);
 	
 	
 	function IsNullOrEmpty(val){

@@ -1,27 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>webgl & threejs</title>
-  <link rel="stylesheet" href="styles/main.css">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Solar System</title>
+	<style>
+		
+    </style>
+	<link rel="stylesheet" href="styles/main.css" />
 </head>
 <body>
 
-  <div id="app">
-    <section id="app">
-       <div class="app-content" id="appContent">
-        
-          <canvas id="canvas"></canvas>
-          
-       </div>
-   </section>
-  </div>
-
-  <script src="lib/three/three.min.js"></script>
-  <script src="lib/dat.gui/build/dat.gui.min.js"></script>
-   <!--<script src="js/libs.min.js"></script>-->
-  <!--<script src="js/bundle.js"></script>-->
-  <script src="js/main.js"></script>
-  
+	<div id="app">
+		<div class="app-content" id="appContent">
+			<!--<div class="toolbox">Help (F1)</div>-->
+			<div id="webgl"></div>
+			<div id="help" class="hidden">
+				<div class="help-content">
+					<h1>Solar System</h1>
+					<p>ESC - Help</p>
+					<p>E - Move camera to Earth</p>
+					<p class="help-footer">Created by: Vadym Berkut, Ilia Boliliy</p>
+				</div>
+			</div>
+	   </div>
+	</div>
+	
+	
+	<script src="lib/three.js"></script>
+	<script src="lib/Detector.js"></script>		
+	<script src="lib/TrackballControls.js"></script>		
+	<script src="lib/OrbitControls.js"></script>		
+	<!--<script src="lib/ReusableRay.js"></script>		
+	<script src="lib/Projector.js"></script>		-->
+	<script src="lib/dat.gui.min.js"></script>		
+	<script src="js/main.js"></script>  
 </body>
 </html>
