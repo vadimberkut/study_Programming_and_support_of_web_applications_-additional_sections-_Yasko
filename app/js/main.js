@@ -581,7 +581,8 @@
 				bumpMap:     THREE.ImageUtils.loadTexture('images/earth/bump.jpg'),
 				bumpScale:   0.005,
 				specularMap: THREE.ImageUtils.loadTexture('images/earth/specular.png'),
-				specular:    new THREE.Color('grey')								
+				specular:    new THREE.Color(0x777777),
+				shininess: 2
 			})
 		);
 	}
@@ -629,7 +630,7 @@
 			new THREE.SphereGeometry(radius, segments, segments),
 			new THREE.MeshPhongMaterial({
 				//map:         THREE.ImageUtils.loadTexture('images/jupiter/map.jpg'),
-				map:         THREE.ImageUtils.loadTexture('images/jupiter/mapnew20064k.jpg'),
+				map:         THREE.ImageUtils.loadTexture('images/jupiter/mapnew20061k.jpg'),
 				//bumpMap:     THREE.ImageUtils.loadTexture('images/jupiter/bump.jpg'),
 				//bumpScale:   0.005,
 				//specularMap: THREE.ImageUtils.loadTexture('images/jupiter/specularMap.png'),
@@ -706,8 +707,8 @@
 		return new THREE.Mesh(
 			new THREE.SphereGeometry(radius, segments, segments),
 			new THREE.MeshPhongMaterial({
-				map:         THREE.ImageUtils.loadTexture('images/pluto/map2k.jpg'),
-				bumpMap:     THREE.ImageUtils.loadTexture('images/pluto/bump2k.jpg'),
+				map:         THREE.ImageUtils.loadTexture('images/pluto/map1k.jpg'),
+				bumpMap:     THREE.ImageUtils.loadTexture('images/pluto/bump1k.jpg'),
 				bumpScale:   0.005,
 				//specularMap: THREE.ImageUtils.loadTexture('images/jupiter/specularMap.png'),
 				//specular:    new THREE.Color('grey')								
