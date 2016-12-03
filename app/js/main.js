@@ -1,4 +1,3 @@
-// Created by Bjorn Sandvik - thematicmapping.org
 (function () {
 
 	var webglEl = document.getElementById('webgl');
@@ -14,7 +13,7 @@
 	var radius   = 0.5,
 		segments = 32,
 		rotation = 6;
-		
+
 	//var config = {
 	//	totalSpeed: 0	
 	//};

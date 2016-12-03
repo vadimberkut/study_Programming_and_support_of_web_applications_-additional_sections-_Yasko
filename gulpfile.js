@@ -70,7 +70,8 @@ gulp.task('server', ['connect', 'watch_']);
 // Configuration for Gulp
 var config = {
   js: {
-    src: './app/js/main.js',
+    srcDir: './app/js/**/*.js',
+    srcFile: './app/js/main.js',
     watch: './app/**/*.+(js|jsx)',
     outputDir: './app',
     outputFile: 'bundle.js'
@@ -107,7 +108,7 @@ function bundle(bundler) {
       .bundle()
       .on('error', mapError) // Map error reporting
       //.pipe(source('main.jsx')) // Set source name
-      .pipe(source(config.js.src)) // Set source name
+      .pipe(source(config.js.srcFile)) // Set source name
       .pipe(buffer()) // Convert to gulp pipeline
       .pipe(rename(config.js.outputFile)) // Rename the output file
       .pipe(sourcemaps.init({loadMaps: true})) // Extract the inline sourcemaps
@@ -138,22 +139,51 @@ gulp.task('css', function(){
       .pipe(gulp.dest(config.css.outputDir))
 });
 
+//SCRIPTS
+gulp.task('scripts', function() {
+  //return gulp.src([ './app/lib/*.js',config.js.srcDir])
+  return gulp.src([
+        './app/lib/three.js',
+        './app/lib/Detector.js',
+        './app/lib/TrackballControls.js',
+        './app/lib/OrbitControls.js',
+        './app/lib/Projector.js',
+        './app/lib/dat.gui.min.js',
+        './app/lib/Projector.js',
+
+        './app/js/main.js'
+      ])
+      .pipe(concat(config.js.outputFile))
+      .pipe(gulp.dest(config.js.outputDir));
+});
+
 // Watch Task (Gulp task for build)
+//gulp.task('watch', function() {
+//  livereload.listen(); // Start livereload server
+//
+//  //SCRIPTS
+//  var args = merge(watchify.args, { debug: true }); // Merge in default watchify args with browserify arguments
+//
+//  var bundler = browserify(config.js.src, args) // Browserify
+//      .plugin(watchify, {ignoreWatch: ['**/node_modules/**', '**/bower_components/**']}) // Watchify to watch source file changes
+//      .transform(babelify, {presets: ['es2015', 'react']}); // Babel tranforms
+//
+//  bundle(bundler); // Run the bundle the first time (required for Watchify to kick in)
+//
+//  bundler.on('update', function() {
+//    bundle(bundler); // Re-run bundle on source updates
+//  });
+//
+//  //STYLES
+//  //gulp.watch('app/styles/sass/**/*.+(scss|sass)', ['sass']).on('change', livereload.changed);
+//  gulp.watch(config.css.src, ['css']).on('change', livereload.changed);
+//});
+
 gulp.task('watch', function() {
   livereload.listen(); // Start livereload server
 
   //SCRIPTS
-  var args = merge(watchify.args, { debug: true }); // Merge in default watchify args with browserify arguments
-
-  var bundler = browserify(config.js.src, args) // Browserify
-      .plugin(watchify, {ignoreWatch: ['**/node_modules/**', '**/bower_components/**']}) // Watchify to watch source file changes
-      .transform(babelify, {presets: ['es2015', 'react']}); // Babel tranforms
-
-  bundle(bundler); // Run the bundle the first time (required for Watchify to kick in)
-
-  bundler.on('update', function() {
-    bundle(bundler); // Re-run bundle on source updates
-  });
+  gulp.watch(config.js.watch, ['scripts']).on('change', livereload.changed);
 
   //STYLES
   //gulp.watch('app/styles/sass/**/*.+(scss|sass)', ['sass']).on('change', livereload.changed);
@@ -161,4 +191,4 @@ gulp.task('watch', function() {
 });
 
 // Default Task
-gulp.task('default', ['watch']);
+gulp.task('default', ['server', 'watch']);
