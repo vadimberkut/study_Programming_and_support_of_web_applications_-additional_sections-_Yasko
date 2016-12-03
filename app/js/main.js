@@ -483,26 +483,6 @@
 			case 57: //9
 				moveCameraToPlanet(objectsInfo.pluto);
 				break;
-			
-			case 38: // up
-			case 87: // w
-				moveForward = true;
-				break;
-			case 37: // left
-			case 65: // a
-				moveLeft = true; break;
-			case 40: // down
-			case 83: // s
-				moveBackward = true;
-				break;
-			case 39: // right
-			case 68: // d
-				moveRight = true;
-				break;
-			case 32: // space
-				if ( canJump === true ) velocity.y += 350;
-				canJump = false;
-				break;
 		}
 	}, false);
 	
@@ -563,12 +543,6 @@
 				//map:         THREE.ImageUtils.loadTexture('images/sun/euvisdoCarringtonMap.jpg'),
 				//map:         THREE.ImageUtils.loadTexture('images/sun/SunTexture_2048.png'),
 				map:         THREE.ImageUtils.loadTexture('images/sun/20140107-x1.2flare_0.jpg'),
-				//bumpMap:     THREE.ImageUtils.loadTexture('images/earth/elev_bump_4k.jpg'),
-				//bumpScale:   0.005,
-				//specularMap: THREE.ImageUtils.loadTexture('images/mars/mars_spec1.png'),
-				//specular:    new THREE.Color('grey'),
-				//normalMap: THREE.ImageUtils.loadTexture('images/mars/mars_normal1.png'),
-				//needsUpdate: true
 			})
 		);
 	}
