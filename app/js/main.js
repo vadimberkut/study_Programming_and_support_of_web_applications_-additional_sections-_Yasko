@@ -36,7 +36,7 @@
 	renderer.setSize(width, height);
 
 	//LIGHT
-	//scene.add(new THREE.AmbientLight(0x222222));
+	scene.add(new THREE.AmbientLight(0x222222));
 	//
 	var light = new THREE.DirectionalLight(0xffffff, 1);
 	light.position.set(51,0,0);
@@ -108,7 +108,7 @@
 			mesh: null
 		},
 		venus: {
-			name: "Wenus",
+			name: "Venus",
 			x: 0,
 			y: 0,
 			z: 0,
@@ -385,54 +385,54 @@
 			}
 		}
 		
-		//CLICK
-		if(clickInfo.userHasClicked){
-			clickInfo.userHasClicked = false;
-			
-			// update the picking ray with the camera and mouse position	
-			raycaster.setFromCamera( clickInfo.mouseVec2, camera );	
-		
-			// calculate objects intersecting the picking ray
-			var intersects = raycaster.intersectObjects( scene.children );
-			var intersectsIds = intersects.map(function(item){return item.object.id});
-			
-			//The intersection// object holds the intersection point, the face that's // been "hit" by the ray, and the object to which that // face belongs.
-			var first = intersects[0];
-			var targetObg = first.object;
-			console.log("click ray intersects ",intersects);
-			//console.log("click ray intersection ",first,targetObg.name, targetObg.id);
-
-			//check if planet
-			var found = null;
-			for(var p in objectsInfo){
-				if(!objectsInfo.hasOwnProperty(p))
-					continue;
-				
-				if(intersectsIds.indexOf(objectsInfo[p].mesh.id) !== -1){
-					found = objectsInfo[p];
-					break;
-				}
-			}
-			if(found !== null){
-				console.log("clicked on ", found.name);
-				
-				//targetObg.material.color.set( 0xff0000 );
-				
-				var controlsCamera = controls.object;
-				//controls.autoRotate = true;
-				//controlsCamera.position.set(0,1000,0);
-				
-				var R = found.radius - found.planetSize - 40;
-				controlsCamera.position.x = R*Math.cos(found.radian) + 0;
-				controlsCamera.position.z = R*Math.sin(found.radian) + 0;
-				controlsCamera.position.y = 0;
-				
-				controls.target = new THREE.Vector3(targetObg.position.x,targetObg.position.y,targetObg.position.z);
-				
-				console.log("controls ",controls);
-				console.log("camera ",controlsCamera);
-			}
-		}
+		////CLICK
+		//if(clickInfo.userHasClicked){
+		//	clickInfo.userHasClicked = false;
+		//
+		//	// update the picking ray with the camera and mouse position
+		//	raycaster.setFromCamera( clickInfo.mouseVec2, camera );
+		//
+		//	// calculate objects intersecting the picking ray
+		//	var intersects = raycaster.intersectObjects( scene.children );
+		//	var intersectsIds = intersects.map(function(item){return item.object.id});
+		//
+		//	//The intersection// object holds the intersection point, the face that's // been "hit" by the ray, and the object to which that // face belongs.
+		//	var first = intersects[0];
+		//	var targetObg = first.object;
+		//	console.log("click ray intersects ",intersects);
+		//	//console.log("click ray intersection ",first,targetObg.name, targetObg.id);
+        //
+		//	//check if planet
+		//	var found = null;
+		//	for(var p in objectsInfo){
+		//		if(!objectsInfo.hasOwnProperty(p))
+		//			continue;
+		//
+		//		if(intersectsIds.indexOf(objectsInfo[p].mesh.id) !== -1){
+		//			found = objectsInfo[p];
+		//			break;
+		//		}
+		//	}
+		//	if(found !== null){
+		//		console.log("clicked on ", found.name);
+		//
+		//		//targetObg.material.color.set( 0xff0000 );
+		//
+		//		var controlsCamera = controls.object;
+		//		//controls.autoRotate = true;
+		//		//controlsCamera.position.set(0,1000,0);
+		//
+		//		var R = found.radius - found.planetSize - 40;
+		//		controlsCamera.position.x = R*Math.cos(found.radian) + 0;
+		//		controlsCamera.position.z = R*Math.sin(found.radian) + 0;
+		//		controlsCamera.position.y = 0;
+		//
+		//		controls.target = new THREE.Vector3(targetObg.position.x,targetObg.position.y,targetObg.position.z);
+		//
+		//		console.log("controls ",controls);
+		//		console.log("camera ",controlsCamera);
+		//	}
+		//}
 		
 		//RENDER
 		controls.update();
@@ -452,6 +452,37 @@
 				break;
 			case 27: //F1
 				showHelp();
+				break;
+			
+			case 48: //0
+				moveCameraToPlanet(objectsInfo.sun);
+				break;
+			case 49: //1
+				moveCameraToPlanet(objectsInfo.mercury);
+				break;
+			case 50: //2
+				moveCameraToPlanet(objectsInfo.venus);
+				break;
+			case 51: //3
+				moveCameraToPlanet(objectsInfo.earth);
+				break;
+			case 52: //4
+				moveCameraToPlanet(objectsInfo.mars);
+				break;
+			case 53: //5
+				moveCameraToPlanet(objectsInfo.jupiter);
+				break;
+			case 54: //6
+				moveCameraToPlanet(objectsInfo.saturn);
+				break;
+			case 55: //7
+				moveCameraToPlanet(objectsInfo.uran);
+				break;
+			case 56: //8
+				moveCameraToPlanet(objectsInfo.neptun);
+				break;
+			case 57: //9
+				moveCameraToPlanet(objectsInfo.pluto);
 				break;
 			
 			case 38: // up
@@ -721,4 +752,30 @@
 		);
 	}
 
+
+	function moveCameraToPlanet(planetInfo){
+		
+		var mesh = planetInfo.mesh;
+		
+		var controlsCamera = controls.object;
+		//controls.autoRotate = true;
+		//controlsCamera.position.set(0,1000,0);
+		
+		var R = planetInfo.radius - planetInfo.planetSize - 40;
+		var radian = (planetInfo.degree / 180) * Math.PI;
+		
+		if(planetInfo.name.toLowerCase() == 'sun'){
+			R = planetInfo.planetSize + 140;
+		}
+		
+		controlsCamera.position.x = R*Math.cos(radian) + 0;
+		controlsCamera.position.z = R*Math.sin(radian) + 0;
+		controlsCamera.position.y = 0;
+		
+		controls.target = new THREE.Vector3(mesh.position.x,mesh.position.y,mesh.position.z);
+		
+		console.log("planetInfo ",planetInfo);
+		console.log("controls ",controls);
+		console.log("camera ",controlsCamera);
+	}
 }());
