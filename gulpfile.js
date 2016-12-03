@@ -17,6 +17,7 @@ var buffer = require('vinyl-buffer'); // Vinyl stream support
 var watchify = require('watchify'); // Watchify for source changes
 var merge = require('utils-merge'); // Object merge tool
 var duration = require('gulp-duration'); // Time aspects of your gulp process
+var concat = require('gulp-concat'); // Time aspects of your gulp process
 
 var sass = require('gulp-sass');
 var autoprefixer = require('gulp-autoprefixer');
@@ -73,6 +74,11 @@ var config = {
     watch: './app/**/*.+(js|jsx)',
     outputDir: './app',
     outputFile: 'bundle.js'
+  },
+  css: {
+    src: 'app/styles/**/*.css',
+    outputDir: './app',
+    outputFile: 'styles.css'
   }
 };
 
@@ -122,6 +128,16 @@ function bundle(bundler) {
 //      .pipe(gulp.dest('app/styles/css'));
 //});
 
+//CSS
+gulp.task('css', function(){
+  return gulp.src(config.css.src)
+      //.pipe(minifyCSS())
+      .pipe(autoprefixer(['last 15 versions', '> 1%', 'ie 8', 'ie 7'], {cascade: true}))
+      //.pipe(autoprefixer('last 2 version', 'safari 5', 'ie 8', 'ie 9'))
+      .pipe(concat(config.css.outputFile))
+      .pipe(gulp.dest(config.css.outputDir))
+});
+
 // Watch Task (Gulp task for build)
 gulp.task('watch', function() {
   livereload.listen(); // Start livereload server
@@ -139,8 +155,9 @@ gulp.task('watch', function() {
     bundle(bundler); // Re-run bundle on source updates
   });
 
-  ////STYLES
+  //STYLES
   //gulp.watch('app/styles/sass/**/*.+(scss|sass)', ['sass']).on('change', livereload.changed);
+  gulp.watch(config.css.src, ['css']).on('change', livereload.changed);
 });
 
 // Default Task
